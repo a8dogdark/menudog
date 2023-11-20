@@ -1,0 +1,809 @@
+    ICL 'SYSEQU.M65'
+PCRSR   = $CB
+BUFER   = $4000
+LENGHT  = $4000
+    ORG $2000
+    ICL 'ROMRAM.ASM'
+    ICL 'MEM256K.ASM'
+    ICL 'HEXASCII.ASM'
+DISPLAY
+:03 .BYTE $70
+    .BYTE $46
+    .WORD SHOW
+    .BYTE $70
+:15    .BYTE $02
+    .BYTE $41
+    .WORD DISPLAY
+SHOW
+    .SB " "
+    .SB +128,"dogdark"
+    .SB "  softwares "
+    .SB +32,"QRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRE"
+    .SB     "|"
+    .SB +128," CREADOR DE DISCOS CON MENU - DOGDARK "
+    .SB "|"
+    .SB +32,"ARRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRD"
+    .SB "|                                      |"
+    .SB "| MEMORIA DISPONIBLE           "
+VEOMEMORIA
+    .SB "******* |"
+    .SB "| BANCOS DIPONIBLES                 "
+VEOBANKOS
+    .SB "** |"
+    .SB "| SECTORES DISPONIBLES            "
+VEOSECTORESDISPONIBLES
+    .SB "**** |"
+    .SB "| "
+    .SB +128,"C"
+    .SB "ARGAR ARCHIVOS A MEMORIA (MAX 9)  "
+VEOARCHIVOSDISPONIBLES
+    .SB "* |"
+    .SB "| "
+    .SB +128,"D"
+    .SB "IRECTORIO                           |"
+    .SB "| "
+    .SB +128,"F"
+    .SB "ORMATEAR DISCO 1024 SECTORES    "
+VEOFORMATEAR
+    .SB "*** |"
+    .SB "| "
+    .SB +128,"G"
+    .SB "RABAR DISCO                         |"
+    .SB "| "
+    .SB +128,"T"
+    .SB "ITULO DEL DISCO                 "
+VEOTITULO
+    .SB "*** |"
+    .SB "| "
+    .SB +128,"V"
+    .SB "ER ARCHIVOS CARGADOS                |"
+    .SB "|                                      |"
+    .SB +32,"ZRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRC"
+;************************************************
+; DEFINICION DEL DISPLAY
+; PARA DIRECTORIO
+;************************************************
+?DIR
+	.BYTE $70,$70,$70,$46
+	.WORD ???DIR
+	.BYTE $70,$06,$70
+:10 .BYTE $02
+	.BYTE $70,$02,$41
+	.WORD ?DIR
+;************************************************
+;VALORES PARA PANTALLA DIRECTORIO
+;************************************************
+???DIR
+    .SB " "
+    .SB +128,"dogdark"
+    .SB "  softwares "
+	.SB "     DIRECTORIO     "
+??DIR
+:10	.SB "                                        "
+ALERTADIRECTORIO
+    .SB "                                        "
+;************************************************
+; DEFINICION DEL DISPLAY
+; CARGAR ARCHIVOS
+;************************************************
+DLSCARGAR
+:3  .BYTE $70
+    .BYTE $46
+    .WORD SHOWCARGAR
+:2  .BYTE $70
+:12 .BYTE $02
+    .BYTE $70,$70,$70,$02
+    .BYTE $41
+    .WORD DLSCARGAR
+SHOWCARGAR
+    .SB " "
+    .SB +128,"dogdark"
+    .SB "  softwares "
+    .SB +32,"QRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRE"
+    .SB "|"
+    .SB +128,"           CARGA DE ARCHIVO           "
+    .SB "|"
+    .SB +32,"ARRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRD"
+    .SB "|                                      |"
+    .SB "| CARGAR ARCHIVO N-. "
+VEONUMARCARGAR
+    .SB "*                 |"
+    .SB "| FUENTE: "
+FUENTE
+    .SB "********************         |"
+    .SB "| BYTES LEIDOS                  "
+VEOBYTESLEIDOS
+    .SB "****** |"
+    .SB "| SECTORES                         "
+VEOSECTORESLEIDOS
+    .SB "*** |"
+    .SB "| BUFFER INICIO                   "
+VEOBUFFERINICIO
+    .SB "**** |"
+    .SB "| PORTB INICIO                     "
+VEOPORTBINICIO
+    .SB "*** |"
+    .SB "|                                      |"
+    .SB +32,"ZRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRC"
+MENSAJECARGAR
+    .SB "****************************************"
+
+
+
+
+MEMORIATEMPORAL
+    .BYTE $00,$00,$00,$00
+SECTORESDISPONIBLES
+    .BYTE $00,$00
+ARCHIVOSDISPONIBLES
+    .BYTE $00
+ESON
+    .SB " ON"
+ESOFF
+    .SB "OFF"
+RY
+    .BYTE $00,$00,$00
+LEN
+    .BYTE $00,$00,$00
+??FUENTE
+	.BYTE '                    '
+ALL
+	.BYTE 'D:*.*',$9B
+BANCA
+	.BYTE 0,0
+FORMAT
+    .BYTE 0,0
+MENSAJESTART
+	.SB "    PRESIONE "
+	.SB +128," START "
+	.SB " PARA CONTINUAR.    "
+REINICIOMEMORIA
+    LDA MEMORY
+    STA MEMORIATEMPORAL
+    LDA MEMORY+1
+    STA MEMORIATEMPORAL+1
+    LDA MEMORY+2
+    STA MEMORIATEMPORAL+2
+    RTS
+MUESTROMEMORIA
+    JSR LIMPIOVAL
+    LDA MEMORIATEMPORAL
+    STA VAL
+    LDA MEMORIATEMPORAL+1
+    STA VAL+1
+    LDA MEMORIATEMPORAL+2
+    STA VAL+2
+    JSR BIN2BCD
+    LDY #7
+    LDX #6
+MUESTROMEMORIA01
+    LDA RESATASCII,Y
+    STA VEOMEMORIA,X
+    DEY
+    DEX
+    BPL MUESTROMEMORIA01
+    RTS
+REINICIOBANCOS
+    LDA BANKOS
+    STA MEMORIATEMPORAL+3
+    RTS
+MUESTROBANCOS
+    JSR LIMPIOVAL
+    LDA MEMORIATEMPORAL+3
+    STA VAL
+    JSR BIN2BCD
+    LDA RESATASCII+7
+    STA VEOBANKOS+1
+    LDA RESATASCII+6
+    STA VEOBANKOS
+    RTS
+REINICIOSECTORESDISPONIBLES
+    LDA #$00
+    STA SECTORESDISPONIBLES
+    LDA #$04
+    STA SECTORESDISPONIBLES+1
+    RTS
+MUESTROSECTORESDISPONIBLES
+    JSR LIMPIOVAL
+    LDA SECTORESDISPONIBLES
+    STA VAL
+    LDA SECTORESDISPONIBLES+1
+    STA VAL+1
+    JSR BIN2BCD
+    LDY #7
+    LDX #3
+MUESTROSECTORESDISPONIBLES01
+    LDA RESATASCII,Y
+    STA VEOSECTORESDISPONIBLES,X
+    DEY 
+    DEX
+    BPL MUESTROSECTORESDISPONIBLES01
+    RTS
+REINICIOARCHIVOS
+    LDA #$00
+    STA ARCHIVOSDISPONIBLES
+    RTS
+MUESTROARCHIVOSDISPONIBLES
+    JSR LIMPIOVAL
+    LDA ARCHIVOSDISPONIBLES
+    STA VAL
+    JSR BIN2BCD
+    LDA RESATASCII+7
+    STA VEOARCHIVOSDISPONIBLES
+    RTS 
+MOSTRARFORMATEAR
+    LDX FORMAT
+    LDA # <ESON
+    LDY # >ESON
+    CPX #0
+    BEQ MOSTRARFORMATEAR01
+    LDA # <ESOFF
+    LDY # >ESOFF
+    CPX #1
+    BEQ MOSTRARFORMATEAR01
+    LDX #$FF
+    STX FORMAT
+    JMP MOSTRARFORMATEAR
+MOSTRARFORMATEAR01
+    STA MOSTRARFORMATEAR02+1
+    STY MOSTRARFORMATEAR02+2
+    LDX #2
+MOSTRARFORMATEAR02
+    LDA ESON,X
+    STA VEOFORMATEAR,X
+    DEX
+    BPL MOSTRARFORMATEAR02
+    RTS
+MOSTRARTITULO
+    LDX FORMAT+1
+    LDA # <ESON
+    LDY # >ESON
+    CPX #0
+    BEQ MOSTRARTITULO01
+    LDA # <ESOFF
+    LDY # >ESOFF
+    CPX #1
+    BEQ MOSTRARTITULO01
+    LDX #$0
+    STX FORMAT+1
+    JMP MOSTRARTITULO
+MOSTRARTITULO01
+    STA MOSTRARTITULO02+1
+    STY MOSTRARTITULO02+2
+    LDX #2
+MOSTRARTITULO02
+    LDA ESON,X
+    STA VEOTITULO,X
+    DEX
+    BPL MOSTRARTITULO02
+    RTS
+RESETER
+    JSR MEMORIA
+    JSR REINICIOMEMORIA
+    JSR REINICIOBANCOS
+    JSR REINICIOSECTORESDISPONIBLES
+    JSR REINICIOARCHIVOS
+    LDX #1
+    STX FORMAT
+    STX FORMAT+1
+    RTS
+SERASTART
+	LDA CONSOL
+	CMP #$06
+	BNE SERASTART
+SERASTART01
+	LDA CONSOL
+	CMP #$06
+	BEQ SERASTART01
+	RTS
+;************************************************
+;FUNCION QUE NOS PERMITE PODER CONVERTIR UN BYTE
+;EN ATASCII, USADO PARA INGRESO DE TITULOS Y
+;FUENTE, NO TIENE LIMITACIONES MAYORES EN LAS
+;PULSACIONES DEL TECLADO
+;************************************************
+ASCINT
+	CMP #32
+	BCC ADD64
+	CMP #96
+	BCC SUB32
+	CMP #128
+	BCC REMAIN
+	CMP #160
+	BCC ADD64
+	CMP #224
+	BCC SUB32
+	BCS REMAIN
+ADD64
+	CLC
+	ADC #64
+	BCC REMAIN
+SUB32
+	SEC
+	SBC #32
+REMAIN
+	RTS
+;************************************************
+;GENERA UNA LIMPIEZA TOTAL DEL DISPLAY DEL
+;DIRECTORIO
+;************************************************
+CLS
+	LDX # <??DIR
+	LDY # >??DIR
+	STX PCRSR
+	STY PCRSR+1
+	LDY #$00
+	LDX #$00
+?CLS
+	LDA #$00
+	STA (PCRSR),Y
+	INY
+	BNE ??CLS
+	INX
+	INC PCRSR+1
+??CLS
+	CPY #104	;$68
+	BNE ?CLS
+	CPX #$01
+	BNE ?CLS
+	RTS
+;************************************************
+;FUNCION QUE ABRE PERIFERICOS
+;************************************************
+OPEN
+	LDX #$10
+	LDA #$03
+	STA $0342,X
+	LDA # <??FUENTE
+	STA $0344,X
+	LDA # >??FUENTE
+	STA $0345,X
+	LDA #$04
+	STA $034A,X
+	LDA #$80
+	STA $034B,X
+	JSR $E456
+	DEY
+	BNE DIR
+	RTS
+;************************************************
+;FUNCION QUE CIERRA PERIFERICOS
+;************************************************
+CLOSE
+	LDX #$10
+	LDA #$0C
+	STA $0342,X
+	JMP $E456
+;************************************************
+;MUESTRA EL DIRECTORIO EN PANTALLA
+;************************************************
+DIR
+	JSR CLOSE
+	JSR CLS
+	LDX # <?DIR
+	LDY # >?DIR
+	STX $0230
+	STY $0231
+	LDX # <??DIR
+	LDY # >??DIR
+	STX PCRSR
+	STY PCRSR+1
+	
+;	
+	LDX #$10
+	LDA #$03
+	STA $0342,X
+	LDA # <ALL
+	STA $0344,X
+	LDA # >ALL
+	STA $0345,X
+	LDA #$06
+	STA $034A,X
+	LDA #$00
+	STA $034B,X
+	JSR $E456
+	LDA #$07
+	STA $0342,X
+	LDA #$00
+	STA $0348,X
+	STA $0349,X
+	STA RY
+	STA RY+1
+LEDIR
+	JSR $E456
+	BMI ?EXIT
+	CMP #155
+	BEQ EXIT
+	JSR ASCINT
+	LDY RY
+	STA (PCRSR),Y
+	INC RY
+	BNE F0
+	INC PCRSR+1
+	INC RY+1
+F0
+	LDY RY+1
+	CPY #$01
+	BNE F1
+	LDY RY
+	CPY #104	;$68
+	BCC F1
+	JSR PAUSE
+	INC RY
+F1
+	JMP LEDIR
+EXIT
+	INC RY
+	INC RY
+	INC RY
+	JMP LEDIR
+?EXIT
+	JSR CLOSE
+    LDX #39
+??EXIT
+    LDA MENSAJESTART,X
+    STA ALERTADIRECTORIO,X
+    DEX
+    BPL ??EXIT
+	JSR PAUSE
+	JSR CLS
+	PLA
+	PLA
+	JMP START
+PAUSE
+	LDA 53279
+	CMP #$06
+	BNE PAUSE
+	JSR CLS
+	LDA #$00
+	STA RY
+	STA RY+1
+	LDA # <??DIR
+	STA PCRSR
+	LDA # >??DIR
+	STA PCRSR+1
+	LDX #$10
+	RTS
+;************************************************
+;RUTINA QUE NOS PERMMITE PODER INGRESAR INFORMA-
+;CION A UN CAMPO ESPECIFICO YA ANTES DECLARADO
+;MOSTRANDO UN CURSOR EN FORMA PARPADEANTE
+;************************************************
+;
+;************************************************
+;CURSOR PARPADEANTE
+;************************************************
+FLSH
+	LDY RY
+	LDA (PCRSR),Y
+	EOR #63
+	STA (PCRSR),Y
+	LDA #$10
+	STA $021A
+	RTS
+;************************************************
+;ABRE PERIFERICO TECLADO
+;************************************************
+OPENK
+	LDA #255
+	STA 764
+	LDX #$10
+	LDA #$03
+	STA $0342,X
+	STA $0345,X
+	LDA #$26
+	STA $0344,X
+	LDA #$04
+	STA $034A,X
+	JSR $E456
+	LDA #$07
+	STA $0342,X
+	LDA #$00
+	STA $0348,X
+	STA $0349,X
+	STA RY
+	RTS
+;************************************************
+;RUTINA QUE LEE LO TECLEADO
+;************************************************
+RUTLEE
+	LDX # <FLSH
+	LDY # >FLSH
+	LDA #$10
+	STX $0228
+	STY $0229
+	STA $021A
+	JSR OPENK
+GETEC
+	JSR $E456
+	CMP #$7E
+	BNE C0
+	LDY RY
+	BEQ GETEC
+	LDA #$00
+	STA (PCRSR),Y
+	LDA #63		;$3F
+	DEY
+	STA (PCRSR),Y
+	DEC RY
+	JMP GETEC
+C0
+	CMP #155	;$9B
+	BEQ C2
+	JSR ASCINT
+	LDY RY
+	STA (PCRSR),Y
+	CPY #20		;#14
+	BEQ C1
+	INC RY
+C1
+	JMP GETEC
+C2
+	JSR CLOSE
+	LDA #$00
+	STA $021A
+	LDY RY
+	STA (PCRSR),Y
+	RTS
+FGET
+    LDA #$40
+    STA 710
+    STA 712
+    RTS
+;************************************************
+;DISPLAY DE INICIO DEL PROGRAMA Y FUNCIONALIDAD
+;DIRECTA A TODAS SUS FUNCIONES
+;************************************************
+DOS
+	JMP ($0C)
+@START
+	JSR DOS   
+START
+    LDX #<DISPLAY
+    LDY #>DISPLAY
+    STX $230
+    STY $231
+    LDA #$02
+    STA 710
+    STA 712
+    JSR MUESTROMEMORIA
+    JSR MUESTROBANCOS
+    JSR MUESTROSECTORESDISPONIBLES
+    JSR MUESTROARCHIVOSDISPONIBLES
+    JSR MOSTRARFORMATEAR
+    JSR MOSTRARTITULO
+;*************************
+;MENU PRINCIPAL
+;*************************
+MENU
+    JSR CLOSE
+	JSR OPENK
+    JSR $E456
+
+    CMP #$43
+    BEQ ESC     ;ES LETRA C
+
+    CMP #$44
+    BEQ ESD     ;ES LETRA D
+
+    CMP #$46
+    BEQ ESF     ;ES LETRA F
+
+    CMP #$47
+    BEQ ESG     ;ES LETRA G
+
+    CMP #$54
+    BEQ EST     ;ES LETRA T
+
+    CMP #$56
+    BEQ ESV     ;ES LETRA V
+    JMP MENU
+ESC
+    JMP CARGARARCHIVOS
+ESD
+    JMP DIR
+ESF
+    LDX FORMAT
+    INX
+    STX FORMAT
+    CPX #2
+    BEQ ESF02
+ESF01
+    JSR MOSTRARFORMATEAR
+    JMP MENU
+ESF02
+    LDX #0
+    STX FORMAT
+    JMP ESF01
+ESG
+    JMP GRABARARCHIVOS
+EST
+    LDX FORMAT+1
+    INX
+    STX FORMAT+1
+    CPX #2
+    BEQ EST02
+EST01
+    JSR MOSTRARTITULO
+    JMP MENU
+EST02
+    LDX #0
+    STX FORMAT+1
+    JMP EST01
+ESV
+
+    JMP *
+CARGARARCHIVOS
+    LDA # <DLSCARGAR
+    STA $230
+    LDA # >DLSCARGAR
+    STA $231
+    JSR LIMPIOVAL
+    LDX ARCHIVOSDISPONIBLES
+    INX
+    TXA
+    STA VAL
+    JSR BIN2BCD
+    LDA RESATASCII+7
+    STA VEONUMARCARGAR
+    LDX #19
+    LDA #$00
+CARGARARCHIVOS01
+    STA FUENTE,X
+    DEX
+    BPL CARGARARCHIVOS01
+    LDX #39
+CARGARARCHIVOS01B
+    STA MENSAJECARGAR,X
+    DEX
+    BPL CARGARARCHIVOS01B
+    LDX #5
+    LDA #$10
+CARGARARCHIVOS02
+    STA VEOBYTESLEIDOS,X
+    DEX
+    BPL CARGARARCHIVOS02
+    STA VEOSECTORESLEIDOS
+    STA VEOSECTORESLEIDOS+1
+    STA VEOSECTORESLEIDOS+2
+    JSR LIMPIOVAL
+    LDA # <BUFER
+    STA VAL
+    LDA # >BUFER
+    STA VAL+1
+    JSR BIN3BCD
+    LDX #3
+CARGARARCHIVOS03
+    LDA HEXATASCII,X
+    STA VEOBUFFERINICIO,X
+    DEX
+    BPL CARGARARCHIVOS03
+    JSR LIMPIOVAL
+    LDA PORTB
+    STA VAL
+    JSR BIN2BCD
+    LDY #7
+    LDX #2
+CARGARARCHIVOS04
+    LDA RESATASCII,Y 
+    STA VEOPORTBINICIO,X
+    DEY
+    DEX
+    BPL CARGARARCHIVOS04
+
+;INGRESAMOS EL ARCHIVO A CARGAR
+    LDA #<FUENTE
+	LDX #>FUENTE
+	STA PCRSR
+	STX PCRSR+1
+	JSR RUTLEE
+	LDY RY
+	CPY #1
+	BEQ OPENPER
+	LDY #19
+CONV
+	LDA FUENTE,Y
+	BEQ ?REMAIN
+	AND #$7F
+	CMP #64
+	BCC ADD32
+	CMP #96
+	BCC SUB64
+	BCS ?REMAIN
+ADD32
+	CLC
+	ADC #32
+	BCC OKLET
+SUB64
+	SEC
+	SBC #64
+?REMAIN
+	LDA #$9B
+OKLET
+	STA ??FUENTE,Y
+	DEY
+	BPL CONV
+OPENPER
+    JSR OPEN
+    JSR FGET
+    JSR CLOSE
+    JSR SERASTART
+    JMP START
+    RTS
+GRABARARCHIVOS
+    
+    LDA #$40
+    STA 710
+    STA 712
+    JSR SERASTART
+    JMP START
+BYTES
+    .BYTE $00,$03,$00,$07,$08,$07,$18,$60
+    .BYTE $A9,$00,$8D,$44,$02,$A8,$99,$80
+    .BYTE $08,$88,$D0,$FA,$C8,$84,$09,$8C
+    .BYTE $01,$03,$CE,$06,$03,$A9,$58,$8D
+    .BYTE $30,$02,$A9,$08,$8D,$31,$02,$A9
+    .BYTE $69,$85,$18,$EA,$EA,$EA,$EA,$EA
+    .BYTE $A5,$18,$8D,$0A,$03,$A9,$01,$8D
+    .BYTE $0B,$03,$E6,$18,$20,$0D,$08,$B9
+    .BYTE $00,$0A,$F0,$47,$30,$3B,$A6,$47
+    .BYTE $B9,$03,$0A,$95,$5A,$B9,$04,$0A
+    .BYTE $95,$6E,$8A,$18,$69,$91,$A6,$48
+    .BYTE $9D,$80,$08,$A9,$0B,$85,$49,$B9
+    .BYTE $05,$0A,$38,$E9,$20,$9D,$82,$08
+    .BYTE $C8,$E8,$C6,$49,$D0,$F1,$98,$38
+    .BYTE $E9,$0B,$A8,$8A,$18,$69,$09,$85
+    .BYTE $48,$E6,$47,$A5,$47,$C9,$09,$F0
+    .BYTE $0A,$98,$18,$69,$10,$A8,$0A,$90
+    .BYTE $B6,$B0,$A5,$C6,$42,$85,$14,$C5
+    .BYTE $14,$F0,$FC,$20,$4F,$08,$38,$E9
+    .BYTE $31,$C5,$47,$B0,$F6,$AA,$DE,$60
+    .BYTE $08,$B5,$5A,$8D,$0A,$03,$B5,$6E
+    .BYTE $8D,$0B,$03,$20,$21,$08,$CA,$20
+    .BYTE $FC,$07,$85,$43,$20,$FC,$07,$85
+    .BYTE $44,$25,$43,$C9,$FF,$F0,$F0,$20
+    .BYTE $FC,$07,$85,$45,$20,$FC,$07,$85
+    .BYTE $46,$20,$FC,$07,$91,$43,$E6,$43
+    .BYTE $D0,$02,$E6,$44,$A5,$45,$C5,$43
+    .BYTE $A5,$46,$E5,$44,$B0,$EB,$AD,$E2
+    .BYTE $02,$0D,$E3,$02,$F0,$C9,$86,$19
+    .BYTE $C6,$42,$20,$F9,$07,$A6,$19,$A0
+    .BYTE $00,$8C,$E2,$02,$8C,$E3,$02,$F0
+    .BYTE $B6,$6C,$E2,$02,$E0,$7D,$D0,$4A
+    .BYTE $AD,$0A,$03,$0D,$0B,$03,$D0,$19
+    .BYTE $C6,$42,$6C,$E0,$02,$A9,$31,$8D
+    .BYTE $00,$03,$A9,$52,$8D,$02,$03,$A9
+    .BYTE $0A,$8D,$05,$03,$A9,$80,$8D,$08
+    .BYTE $03,$A9,$40,$8D,$03,$03,$20,$59
+    .BYTE $E4,$30,$F6,$E6,$42,$AD,$7D,$0A
+    .BYTE $29,$03,$8D,$0B,$03,$AD,$7E,$0A
+    .BYTE $8D,$0A,$03,$8D,$17,$D0,$AD,$7F
+    .BYTE $0A,$29,$7F,$8D,$FD,$07,$A0,$00
+    .BYTE $A2,$00,$BD,$00,$0A,$E8,$60,$AD
+    .BYTE $25,$E4,$48,$AD,$24,$E4,$48,$60
+;
+DLSAUTO
+    .BYTE $70,$70,$70,$47,$6C,$08,$70,$70
+    .BYTE $07,$07,$07,$07,$07,$07,$07,$07
+    .BYTE $07,$41,$58,$08 
+SHOWAUTO
+    .BYTE $00,$00,$00,$00,$00,$00,$00,$00
+    .BYTE $00,$00,$00,$00,$00,$00,$00,$00
+    .BYTE $00,$00,$00,$00
+BUFERUTO
+    .BYTE $00
+INICIO
+    JSR ROMRAM			;COPIO LA ROM A LA RAM
+	LDX # <@START
+	LDY # >@START
+	LDA #$03
+	STX $02
+	STY $03
+	STA $09
+	LDY #$FF
+	STY $08
+	INY   
+	STY $0244
+    JSR RESETER
+    JMP START
+    RUN INICIO
